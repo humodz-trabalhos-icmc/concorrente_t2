@@ -79,7 +79,11 @@ void gauss_jordan(double **matriz, int linhas, int colunas) {
 
 			//caso o pivot seja maior que 0 entao divide-se toda sua linha por -pivot
 			if(i == j && matriz[i][j] != 1) {
-				divide(matriz,i,colunas,matriz[i][j]);
+				if(i == j && matriz[i][j] == 0)
+					exit(0);
+					//tratar pivoteamento durante o processo de escalonamento
+				else
+					divide(matriz,i,colunas,matriz[i][j]);
 			}
 
 			//caso o pivot seja 1
