@@ -1,0 +1,13 @@
+** PIVOTEAMENTO **
+
+for j, i in range(n):
+	SE o pivô é zero
+		incrementa i até encontrar M[i][j] != 0
+		SE encontrou:
+			permuta as linhas
+		SE NÃO
+			joga linha pro fim (permuta com a ultima que não é tudo zero)
+			continue
+	
+	divide toda a linha pelo valor do pivo
+	zera pra cima e pra baixo
