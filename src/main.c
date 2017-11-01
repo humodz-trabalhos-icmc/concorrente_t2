@@ -59,14 +59,10 @@ void scatter_and_print(int rank, float *m, int n) {
     float *col = malloc(sizeof(float[n]));
     assert(col != NULL);
 
-    int err = MPI_Scatter(
+    MPI_Scatter(
             m, n, MPI_FLOAT,
             col, n, MPI_FLOAT,
             0, MPI_COMM_WORLD);
-
-    if(err != MPI_SUCCESS) {
-        printf("aff\n");
-    }
 
     int num_procs;
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
