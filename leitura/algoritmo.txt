@@ -6,7 +6,6 @@ for j, i in range(n):
 		SE encontrou:
 			permuta as linhas
 		SE NÃO
-			joga linha pro fim (permuta com a ultima que não é tudo zero)
 			continue
 	
 	divide toda a linha pelo valor do pivo
