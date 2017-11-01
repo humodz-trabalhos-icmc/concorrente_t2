@@ -1,3 +1,11 @@
+/**
+ * Bruno Henrique Rasteiro
+ * Hugo Moraes Dzin 8532186
+ * Luiz Eduardo Dorici
+ * Matheus Gomes da Silva Horta
+ */
+
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
