@@ -1,6 +1,9 @@
 SOURCES := $(wildcard src/*)
 TARGET := ./bin/t2
 
+# Default value
+NP ?= 4
+
 .PHONY: all
 all: bin/ $(TARGET) ;
 
@@ -16,5 +19,5 @@ clean:
 	rm -rf bin/*
 
 .PHONY: run
-run:
+run: all
 	mpirun -np $(NP) $(TARGET)
