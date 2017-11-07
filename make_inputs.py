@@ -3,7 +3,8 @@
 import os
 
 
-dims = [1000, 5000, 10000]
+# Os 3 primeiros pra ser mais facil de testar
+dims = [10, 20, 40, 1000, 5000, 10000]
 
 
 for n in dims:
