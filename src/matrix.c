@@ -33,7 +33,41 @@ Vector Vector_read(FILE *fp) {
         vec.data = realloc(vec.data, sizeof(float[vec.n]));
     }
 
+    vec.indices = malloc(sizeof(size_t[vec.n]));
+    assert(vec.indices != NULL);
+
+    for(size_t i = 0; i < vec.n; i++) {
+        vec.indices[i] = i;
+    }
+
     return vec;
+}
+
+
+void Vector_free(Vector *vec) {
+    free(vec->data);
+    free(vec->indices);
+    vec->data = NULL;
+    vec->indices = NULL;
+}
+
+
+void Vector_print(Vector *vec, FILE *fp) {
+    for(size_t i = 0; i < vec->n; i++) {
+        size_t pos = vec->indices[i];
+        fprintf(fp, "%f\n", vec->data[pos]);
+    }
+}
+
+
+void Vector_swap(Vector *vec, size_t i, size_t j) {
+    float f = vec->data[i];
+    vec->data[i] = vec->data[j];
+    vec->data[j] = f;
+
+    size_t s = vec->indices[i];
+    vec->indices[i] = vec->indices[j];
+    vec->indices[j] = s;
 }
 
 
@@ -61,12 +95,6 @@ void Matrix_free(ColMajorMatrix *mat) {
 }
 
 
-void Vector_free(Vector *vec) {
-    free(vec->data);
-    vec->data = NULL;
-}
-
-
 void Matrix_print(ColMajorMatrix *mat, FILE *fp) {
     for(size_t i = 0; i < mat->n; i++) {
         for(size_t j = 0; j < mat->n; j++) {
@@ -76,10 +104,3 @@ void Matrix_print(ColMajorMatrix *mat, FILE *fp) {
     }
 }
 
-
-void Vector_print(Vector *vec, FILE *fp) {
-    for(size_t i = 0; i < vec->n; i++) {
-            fprintf(fp, "%f ", vec->data[i]);
-    }
-    fprintf(fp, "\n");
-}

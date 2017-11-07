@@ -7,22 +7,25 @@
 
 typedef struct {
     float *data;
+    size_t *indices;
     size_t n;
-} ColMajorMatrix;
+} Vector;
+
+Vector Vector_read(FILE *fp);
+void Vector_free(Vector *vec);
+void Vector_print(Vector *vec, FILE *fp);
+void Vector_swap(Vector *vec, size_t i, size_t j);
 
 
 typedef struct {
     float *data;
     size_t n;
-} Vector;
+} ColMajorMatrix;
 
-
-Vector Vector_read(FILE *fp);
 ColMajorMatrix Matrix_read(FILE *fp, size_t n);
 void Matrix_free(ColMajorMatrix *mat);
-void Vector_free(Vector *vec);
 void Matrix_print(ColMajorMatrix *mat, FILE *fp);
-void Vector_print(Vector *vec, FILE *fp);
+
 
 
 #endif
