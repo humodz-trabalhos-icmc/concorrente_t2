@@ -1,5 +1,6 @@
 SOURCES := $(wildcard src/*)
-TARGET := ./bin/t2
+TARGET := ./bin/gauss_jordan
+
 
 # Default value
 NP ?= 4

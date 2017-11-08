@@ -14,39 +14,64 @@
 #include <omp.h>
 
 #include "matrix.h"
+#include "vector.h"
 #include "utils.h"
 
 
-void print(
-        int rank, int num_procs,
-        int n, int cols_per_process,
-        float *my_columns) {
+void gauss_jordan(
+        ColMajorMatrix *mat, Vector *vec,
+        int rank, int num_procs);
 
-    for(int i = 0; i < rank; i++) {
-        MPI_Barrier(MPI_COMM_WORLD);
+
+int main(int argc, char **argv) {
+    MPI_Init(&argc, &argv);
+
+    int rank;
+    int num_procs;
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+
+    // Only master process does input/output
+    if(rank == 0) {
+        FILE *vector_file = fopen_from_env(
+                "GJ_VECTOR_FILE", "vetor.txt", "r");
+
+        Vector vec = Vector_read(vector_file);
+        fclose(vector_file);
+
+        FILE *matrix_file = fopen_from_env(
+                "GJ_MATRIX_FILE", "matriz.txt", "r");
+
+        ColMajorMatrix mat = Matrix_read(matrix_file, vec.n);
+        fclose(matrix_file);
+
+
+        gauss_jordan(&mat, &vec, rank, num_procs);
+
+
+        FILE *result_file = fopen_from_env(
+                "GJ_RESULT_FILE", "resultado.txt", "w");
+
+        Vector_print(&vec, result_file);
+        fclose(result_file);
+
+        Vector_free(&vec);
+        Matrix_free(&mat);
+
+    } else {
+        gauss_jordan(NULL, NULL, rank, num_procs);
     }
 
-    printf("rank %d:\n", rank);
-    for(int col = 0; col < cols_per_process; col++) {
-        printf("  ");
-        for(int row = 0; row < n; row++) {
-            printf("%f ", my_columns[n*col + row]);
-        }
-        printf("\n");
-    }
-    fflush(stdout);
-
-
-    for(int i = 0; i < num_procs - rank; i++) {
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
-    fflush(stdout);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Finalize();
+    return 0;
 }
 
 
-void scatter_and_print(ColMajorMatrix *mat, Vector *vec, int rank, int num_procs) {
+void gauss_jordan(
+        ColMajorMatrix *mat, Vector *vec,
+        int rank, int num_procs) {
     int n;
     float *send_buf = NULL;
 
@@ -63,26 +88,28 @@ void scatter_and_print(ColMajorMatrix *mat, Vector *vec, int rank, int num_procs
     float *my_columns = malloc(sizeof(float[n * cols_per_process]));
     assert(my_columns != NULL);
 
+    scatter_cyclically(send_buf, my_columns, n, num_procs);
+    if(0) {
+        MPI_Datatype aux_type, CyclicColumnsType;
 
-    MPI_Datatype aux_type, CyclicColumnsType;
+        MPI_Type_vector(
+                cols_per_process, n, n * num_procs,
+                MPI_FLOAT, &aux_type);
 
-    MPI_Type_vector(
-            cols_per_process, n, n * num_procs,
-            MPI_FLOAT, &aux_type);
+        MPI_Type_create_resized(
+                aux_type, 0, sizeof(float[n]),
+                &CyclicColumnsType);
 
-    MPI_Type_create_resized(
-            aux_type, 0, sizeof(float[n]),
-            &CyclicColumnsType);
-
-    MPI_Type_commit(&CyclicColumnsType);
+        MPI_Type_commit(&CyclicColumnsType);
 
 
-    MPI_Scatter(
-            send_buf, 1, CyclicColumnsType,
-            my_columns, n * cols_per_process, MPI_FLOAT,
-            0, MPI_COMM_WORLD);
+        MPI_Scatter(
+                send_buf, 1, CyclicColumnsType,
+                my_columns, n * cols_per_process, MPI_FLOAT,
+                0, MPI_COMM_WORLD);
 
-    MPI_Type_free(&CyclicColumnsType);
+        MPI_Type_free(&CyclicColumnsType);
+    }
 
 
     float *bcast_buffer = malloc(sizeof(float[n]));
@@ -121,7 +148,7 @@ void scatter_and_print(ColMajorMatrix *mat, Vector *vec, int rank, int num_procs
 
         // se der -1, nao precisa pivotear
         if(swap_index > 0) {
-            swap_rows(
+            Matrix_swap_rows(
                     my_columns, n, cols_per_process,
                     pivot_index, swap_index);
         } else if(swap_index == -2) {
@@ -139,7 +166,7 @@ void scatter_and_print(ColMajorMatrix *mat, Vector *vec, int rank, int num_procs
         // Operaçoes no vetor resposta
         if(rank == 0) {
             if(swap_index > 0) {
-                Vector_swap(vec, pivot_index, swap_index);
+                Vector_swap_rows(vec, pivot_index, swap_index);
             }
 
             vec->data[pivot_index] /= pivot;
@@ -190,64 +217,3 @@ void scatter_and_print(ColMajorMatrix *mat, Vector *vec, int rank, int num_procs
     free(my_columns);
 }
 
-
-int main(int argc, char **argv) {
-
-    MPI_Init(&argc, &argv);
-
-    int rank;
-    int num_procs;
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-
-
-    // Macros para determinar arquivos de entrada e saida em tempo de compilação
-#ifdef TESTING
-    // Le da pasta input/TAMANHO/, salva output/resultadoTAMANHO.txt
-    #ifndef SIZE // Pode ser passado por parametro de compilacao
-        #define SIZE "8"
-    #endif
-    #define INPUT_PREFIX "./input/"
-    #define OUTPUT_PREFIX "./output/"
-#else
-    // Le e salva na pasta atual
-    #define SIZE ""
-    #define INPUT_PREFIX "./"
-    #define OUTPUT_PREFIX "./"
-#endif
-
-    const char *vector_txt = INPUT_PREFIX SIZE "/vetor.txt";
-    const char *matrix_txt = INPUT_PREFIX SIZE "/matriz.txt";
-    const char *result_txt = OUTPUT_PREFIX "/resultado" SIZE ".txt";
-
-
-    if(rank == 0) {
-        FILE *vector_file = fopen(vector_txt, "r");
-        FILE *matrix_file = fopen(matrix_txt, "r");
-
-        assert(vector_file != NULL && matrix_file != NULL);
-
-        Vector vec = Vector_read(vector_file);
-        ColMajorMatrix mat = Matrix_read(matrix_file, vec.n);
-
-        fclose(vector_file);
-        fclose(matrix_file);
-
-
-        scatter_and_print(&mat, &vec, rank, num_procs);
-
-        FILE *result_file = fopen(result_txt, "w");
-        Vector_print(&vec, result_file);
-        fclose(result_file);
-
-        Vector_free(&vec);
-        Matrix_free(&mat);
-
-    } else {
-        scatter_and_print(NULL, NULL, rank, num_procs);
-    }
-
-    MPI_Finalize();
-    return 0;
-}
