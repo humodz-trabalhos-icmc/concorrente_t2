@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <mpi.h>
 
+#include "vector.h"
 #include "utils.h"
 
 
@@ -82,6 +83,22 @@ void scatter_cyclically(
 }
 
 
+int pivot_swap(float *pivot_column, int pivot_index, int n) {
+    if(pivot_column[pivot_index] == 0) {
+
+        for(int j = pivot_index; j < n; j++) {
+            if(pivot_column[j] != 0) {
+                return j;
+            }
+        }
+        return SKIP_COLUMN;
+    } else {
+        return DONT_SWAP;
+    }
+}
+
+
+
 void gauss_jordan_elimination(
         int rank, int num_procs, int n, int pivot_index,
         float *pivot_column, float *my_columns) {
@@ -90,7 +107,7 @@ void gauss_jordan_elimination(
     // Find 1st column to the right of pivot's column
     int initial_col = (pivot_index + num_procs - rank) / num_procs;
 
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for(int row = 0; row < n; row++) {
         for(int col = initial_col; col < cols_per_process; col++) {
             if(row != pivot_index) {
@@ -98,6 +115,32 @@ void gauss_jordan_elimination(
                 float same_col = my_columns[n*col + pivot_index];
                 my_columns[n*col + row] -= same_row * same_col;
             }
+        }
+    }
+}
+
+
+void update_result(
+        int swap_index, int pivot_index,
+        Vector *vec, float *pivot_column) {
+    float pivot = pivot_column[pivot_index];
+
+    // pivot swapping
+    if(swap_index > 0) {
+        Vector_swap_rows(vec, pivot_index, swap_index);
+    }
+
+    // normalization
+    vec->data[pivot_index] /= pivot;
+
+    // elimination
+    // iterates in reverse order so that pivot's column isn't
+    // zeroed before it's needed
+    for(int row = vec->n - 1; row >= 0; row--) {
+        if(row != pivot_index) {
+            float same_row = pivot_column[row];
+            float same_col = vec->data[pivot_index];
+            vec->data[row] -= same_row * same_col;
         }
     }
 }

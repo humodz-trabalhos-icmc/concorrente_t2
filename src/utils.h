@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include "vector.h"
+
 
 // Open file whose name is stored in an environment variable called
 // @env_var. If the variable doesn't exist, use @default_filename
@@ -25,8 +27,19 @@ void scatter_cyclically(
         int n, int num_procs);
 
 
+#define DONT_SWAP -1
+#define SKIP_COLUMN -2
+
+int pivot_swap(float *pivot_column, int pivot_index, int n);
+
+
 void gauss_jordan_elimination(
         int rank, int num_procs, int n, int pivot_index,
         float *pivot_column, float *my_columns);
+
+
+void update_result(
+        int swap_index, int pivot_index,
+        Vector *vec, float *pivot_column);
 
 #endif
