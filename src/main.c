@@ -17,11 +17,6 @@
 #include "utils.h"
 
 
-int min(int a, int b) {
-    if (a < b) return a;
-    else return b;
-}
-
 void print(
         int rank, int num_procs,
         int n, int cols_per_process,
@@ -34,7 +29,7 @@ void print(
     printf("rank %d:\n", rank);
     for(int col = 0; col < cols_per_process; col++) {
         printf("  ");
-        for(int row = 0; row < min(n, 9999); row++) {
+        for(int row = 0; row < n; row++) {
             printf("%f ", my_columns[n*col + row]);
         }
         printf("\n");
@@ -159,7 +154,6 @@ void scatter_and_print(ColMajorMatrix *mat, Vector *vec, int rank, int num_procs
 
 
         // normalizacao (divide linha do pivo pelo pivo)
-        if(1)
         for(int col = 0; col < cols_per_process; col++) {
             my_columns[n*col + pivot_index] /= pivot;
         }
@@ -169,8 +163,7 @@ void scatter_and_print(ColMajorMatrix *mat, Vector *vec, int rank, int num_procs
         //initial_col = 0;
 
         // eliminacao (subtrai pelo produto)
-        //#pragma omp parallel for
-        if(1)
+        #pragma omp parallel for
         for(int row = 0; row < n; row++) {
             for(int col = initial_col; col < cols_per_process; col++) {
                 if(row != pivot_index) {
@@ -186,15 +179,12 @@ void scatter_and_print(ColMajorMatrix *mat, Vector *vec, int rank, int num_procs
     }
 
 
-    print(rank, num_procs, n, cols_per_process, my_columns);
-    if(0)
+    //print(rank, num_procs, n, cols_per_process, my_columns);
     if(rank == 0){
         for(int row = 0; row < n; row++)
             printf("%f\n", vec->data[row]);
     }
 
-
-    //Vector_print(vec, stdout);
 
     free(bcast_buffer);
     free(my_columns);
@@ -212,12 +202,24 @@ int main(int argc, char **argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
 
-    #define SIZE "8"
+    // Macros para determinar arquivos de entrada e saida em tempo de compilação
+#ifdef TESTING
+    // Le da pasta input/TAMANHO/, salva output/resultadoTAMANHO.txt
+    #ifndef SIZE // Pode ser passado por parametro de compilacao
+        #define SIZE "8"
+    #endif
+    #define INPUT_PREFIX "./input/"
+    #define OUTPUT_PREFIX "./output/"
+#else
+    // Le e salva na pasta atual
+    #define SIZE ""
+    #define INPUT_PREFIX "./"
+    #define OUTPUT_PREFIX "./"
+#endif
 
-    const char *vector_txt = "input/" SIZE "/vetor.txt";
-    const char *matrix_txt = "input/" SIZE "/matriz.txt";
-
-    matrix_txt = "input/rasteiro.txt";
+    const char *vector_txt = INPUT_PREFIX SIZE "/vetor.txt";
+    const char *matrix_txt = INPUT_PREFIX SIZE "/matriz.txt";
+    const char *result_txt = OUTPUT_PREFIX "/resultado" SIZE ".txt";
 
 
     if(rank == 0) {
@@ -234,6 +236,10 @@ int main(int argc, char **argv) {
 
 
         scatter_and_print(&mat, &vec, rank, num_procs);
+
+        FILE *result_file = fopen(result_txt, "w");
+        Vector_print(&vec, result_file);
+        fclose(result_file);
 
         Vector_free(&vec);
         Matrix_free(&mat);

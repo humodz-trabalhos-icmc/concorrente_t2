@@ -5,13 +5,13 @@ TARGET := ./bin/t2
 NP ?= 4
 
 .PHONY: all
-all: bin/ $(TARGET) ;
+all: bin/ output/ $(TARGET) ;
 
 %/:
 	mkdir -p $@
 
 bin/%: $(SOURCES)
-	mpicc -I src/ -Wall -o $@ $^
+	mpicc -fopenmp -I src/ -Wall -o $@ $^
 
 
 .PHONY: clean
