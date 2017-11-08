@@ -15,90 +15,50 @@
 #include "matrix.h"
 #include "utils.h"
 
-void print(
-        int rank, int num_procs,
-        int n, int cols_per_process,
-        float *my_columns) {
-
-    for(int i = 0; i < rank; i++) {
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
-    printf("rank %d:\n", rank);
-    for(int col = 0; col < cols_per_process; col++) {
-        printf("  ");
-        for(int row = 0; row < 5; row++) {
-            printf("%f ", my_columns[n*col + row]);
-        }
-        printf("\n");
-    }
-    fflush(stdout);
-
-
-    for(int i = 0; i < num_procs - rank; i++) {
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-}
 
 void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
-    int n;
+    unsigned long long int n;
     float *send_buf = NULL;
 
+
     if(rank == 0) {
-        n = (int) mat->n;
+        n = mat->n;
         send_buf = mat->data;
     }
 
-    MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+
 
 
     int cols_per_process = n / num_procs;
-    float *my_columns = malloc(sizeof(float[n * cols_per_process]));
-    assert(my_columns != NULL);
-
-    MPI_Datatype aux, cols_type;
-    MPI_Type_vector(cols_per_process, n, n * num_procs, MPI_FLOAT, &aux);
-    MPI_Type_commit(&aux);
-    MPI_Type_create_resized(aux, 0, sizeof(float[n]), &cols_type);
-    MPI_Type_commit(&cols_type);
-
-    MPI_Scatter(
-            send_buf, 1, cols_type,
-            my_columns, n * cols_per_process, MPI_FLOAT,
-            0, MPI_COMM_WORLD);
-
-    MPI_Type_free(&aux);
-    MPI_Type_free(&cols_type);
+    float *recv_buf = malloc(sizeof(float[n * cols_per_process]));
+    assert(recv_buf != NULL);
 
     // Send columns in rounds e.g. A B C A B C
-    float *my_columns_aux = my_columns;
-    if(0)
+    float *recv_buf_aux = recv_buf;
     for(int round = 0; round < cols_per_process; round++) {
 
         MPI_Scatter(
                 send_buf, n, MPI_FLOAT,
-                my_columns_aux, n, MPI_FLOAT,
+                recv_buf_aux, n, MPI_FLOAT,
                 0, MPI_COMM_WORLD);
 
         send_buf += n * num_procs;  // Skip to next block
-        my_columns_aux += n; // Skip to next column;
+        recv_buf_aux += n; // Skip to next column;
     }
 
-    print(rank, num_procs, n, cols_per_process, my_columns);
 
-    /*
     float *bcast_column = malloc(sizeof(float[n]));
     assert(bcast_column != NULL);
 
     for(int i = 0; i < (int) n; i++) {
         int column_owner = (int) i % num_procs;
         int column_index = (int) i / num_procs;
-
         int swap_index[2] = {i, -1};
 
         // pivoteamento
         if(rank == column_owner) {
-            float *pivot_col = &my_columns[n * column_index];
+            float *pivot_col = &recv_buf[n * column_index];
 
             if(pivot_col[i] == 0) {
                 // Pula 0 .. i pois ja foram zeradas
@@ -120,7 +80,7 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
         // se der -1, nao precisa pioteat
         if(swap_index[1] != -1) {
             swap_rows(
-                    my_columns, n, cols_per_process,
+                    recv_buf, n, cols_per_process,
                     swap_index[0], swap_index[1]);
         }
 
@@ -130,7 +90,7 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
         float *current_col = bcast_column;
 
         if(rank == column_owner) {
-            current_col = &my_columns[column_index * n];
+            current_col = &recv_buf[column_index * n];
         }
 
         // envia coluna do pivo
@@ -140,21 +100,20 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
 
         // normalizacao (divide linha do pivo pelo pivo)
         for(int col = 0; col < cols_per_process; col++) {
-            my_columns[n * col + i] /= pivot;
+            recv_buf[n * col + i] /= pivot;
         }
 
 
         // acha 1a coluna que vem depois do pivo
         int initial_col = (i + num_procs - rank) / num_procs;
-        (void) initial_col;
 
         // eliminacao (subtrai pelo produto)
         //#pragma omp parallel for
         for(int row = 0; row < (int) n; row++) {
             for(int col = 0; col < cols_per_process; col++) {
                 if(row != i) {
-                    my_columns[n * col + row] -=
-                        current_col[row] * my_columns[n * col + i];
+                    recv_buf[n * col + row] -=
+                        current_col[row] * recv_buf[n * col + i];
                 }
             }
         }
@@ -167,7 +126,7 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
                 for(int col = 0; col < cols_per_process; col++) {
                     printf("  ");
                     for(int row = 0; row < (int)n; row++) {
-                        printf("%f ", my_columns[n*col + row]);
+                        printf("%f ", recv_buf[n*col + row]);
                     }
                     printf("\n");
                 }
@@ -178,8 +137,8 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
     }
 
 
-    free(bcast_column);/**/
-    free(my_columns);
+    free(bcast_column);
+    free(recv_buf);
 }
 
 
