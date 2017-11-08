@@ -89,28 +89,6 @@ void gauss_jordan(
     assert(my_columns != NULL);
 
     scatter_cyclically(send_buf, my_columns, n, num_procs);
-    if(0) {
-        MPI_Datatype aux_type, CyclicColumnsType;
-
-        MPI_Type_vector(
-                cols_per_process, n, n * num_procs,
-                MPI_FLOAT, &aux_type);
-
-        MPI_Type_create_resized(
-                aux_type, 0, sizeof(float[n]),
-                &CyclicColumnsType);
-
-        MPI_Type_commit(&CyclicColumnsType);
-
-
-        MPI_Scatter(
-                send_buf, 1, CyclicColumnsType,
-                my_columns, n * cols_per_process, MPI_FLOAT,
-                0, MPI_COMM_WORLD);
-
-        MPI_Type_free(&CyclicColumnsType);
-    }
-
 
     float *bcast_buffer = malloc(sizeof(float[n]));
     assert(bcast_buffer != NULL);
