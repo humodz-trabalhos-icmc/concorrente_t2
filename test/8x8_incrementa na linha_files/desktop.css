@@ -1,0 +1,285 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #67666A;
+    background-image: url("../images/bgr.png");
+    font-family: Arial, Verdana, Times New Roman;
+    color: #b5b5b5;
+    min-width: 1140px;
+    font-size: 11pt;
+}
+
+a {
+    color: #FFF;
+    text-decoration: none;
+    border: none;
+    outline: none;
+    -moz-transition: color 0.3s linear;
+    -webkit-transition: color 0.3s linear;
+    -o-transition: color 0.3s linear;
+}
+
+a:hover {
+    color: #d37e0c;
+}
+
+header {
+    height: 150px;
+    position: relative;
+}
+
+#wrapper {
+    margin: 0 auto;
+    width: 1248px;
+    position: relative;
+}
+
+.sideArea {
+    width: 200px;
+    min-height: 30px;
+    float: left;
+    margin: 10px 10px 15px 10px;
+}
+
+.pageCorners {
+    border-radius: 0 0 30px 30px;
+    -webkit-border-radius: 0 0 30px 30px;
+    -moz-border-radius: 0 0 30px 30px;
+}
+
+#middle {
+    width: 728px;
+    float: left;
+    padding: 30px 30px 0 30px;
+    position: relative;
+    margin-bottom: 15px;
+}
+
+footer {
+    padding: 10px 0;
+    position: relative;
+}
+
+nav.topMenu {
+    text-align: right;
+    padding: 30px 0;
+}
+
+nav.topMenu ul {
+    margin: 0;
+    padding: 0;
+}
+
+nav.topMenu ul li {
+    display: inline;
+    list-style-type: none;
+    margin-right: 10px;
+}
+
+nav.topMenu ul li a {
+    display: inline-block;
+    padding: 15px;
+    text-decoration: none;
+    color: #FFF;
+    text-shadow: 0 0 10px black;
+    transition: all 0.3s ease-out;
+    -moz-transition: all 0.3s ease-out;
+    -webkit-transition: all 0.3s ease-out;
+    -o-transition: all 0.3s ease-out;
+}
+
+nav.topMenu ul li a:hover, #current {
+    background-color: #424143;
+    border-radius: 20px;
+    -webkit-border-radius: 20px;
+    -moz-border-radius: 20px;
+    box-shadow: 1px 1px 3px black inset;
+    -webkit-box-shadow: 1px 1px 3px black inset;
+    -moz-box-shadow: 1px 1px 2px black inset;
+    text-shadow: none;
+}
+
+#counter {
+    position: absolute;
+    right: 0;
+    bottom: 5px;
+}
+
+#logo {
+    position: absolute;
+    z-index: 1;
+}
+
+#lang {
+    position: absolute;
+    background-color: #424143;
+    border-radius: 0 0 10px 10px;
+    -webkit-border-radius: 0 0 10px 10px;
+    -moz-border-radius: 0 0 10px 10px;
+    padding: 4px 8px;
+    overflow: hidden;
+    z-index: 1;
+}
+
+#lang img {
+    margin: 2px 0;
+}
+
+#tooltip {
+    display: none;
+    position: absolute;
+    background-color: #d37e0c;
+    color: white;
+    padding: 3px;
+    border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    font-size: 10pt;
+    box-shadow: 1px 1px 5px black;
+    -webkit-box-shadow: 1px 1px 5px black;
+    -moz-box-shadow: 1px 1px 3px black;
+    min-width: 15px;
+    text-align: center;
+    overflow: hidden;
+    z-index: 12;
+}
+
+#social {
+    position: absolute;
+    top: 90px;
+    right: 80px;
+}
+
+.side {
+    padding: 20px;
+}
+
+.r-button {
+    display: inline-block;
+    background-color: #424143;
+    background-image: -moz-linear-gradient(top, #49484a, #424143);
+    background-image: -webkit-linear-gradient(top, #49484a, #424143);
+    background-image: -o-linear-gradient(top, #49484a, #424143);
+    background-image: -ms-linear-gradient(top, #49484a, #424143);
+    background-image: linear-gradient(top, #49484a, #424143);
+    border: 1px solid #333333;
+    color: white;
+    text-shadow: 0 1px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    border-radius: 2px;
+    -moz-border-radius: 2px;
+    -webkit-border-radius: 2px;
+    font-size: 12pt;
+    text-align: center;
+    padding: 3px 8px;
+    outline: none;
+    margin: 4px;
+}
+
+.r-button:hover {
+    background-color: #49484a;
+    background-image: -moz-linear-gradient(top, #49484a, #3e3d3f);
+    background-image: -webkit-linear-gradient(top, #49484a, #3e3d3f);
+    background-image: -o-linear-gradient(top, #49484a, #3e3d3f);
+    background-image: -ms-linear-gradient(top, #49484a, #3e3d3f);
+    background-image: linear-gradient(top, #49484a, #3e3d3f);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+    color: white;
+}
+
+.r-button:active {
+    background-color: #49484a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) inset;
+    -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) inset;
+    -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) inset;
+}
+
+.switchContainer {
+    text-align: center;
+    position: relative;
+    bottom: 20px;
+}
+
+#switch {
+    direction: ltr;
+    display: inline-block;
+    background-color: #424143;
+    box-shadow: 0 0 3px black inset;
+    -webkit-box-shadow: 0 0 5px black inset;
+    -moz-box-shadow: 0 0 3px black inset;
+    border-radius: 15px;
+    -moz-border-radius: 15px;
+    -webkit-border-radius: 15px;
+}
+
+#switch a {
+    display: inline-block;
+    padding: 10px;
+    -moz-transition: all 0.5s ease-out;
+    -webkit-transition: all 0.5s ease-out;
+    -o-transition: all 0.5s ease-out;
+    transition: all 0.5s ease-out;
+}
+
+#switch a:hover {
+    color: #FFF;
+    background-color: #d37e0c;
+    box-shadow: 0 0 3px black inset;
+    -webkit-box-shadow: 0 0 5px black inset;
+    -moz-box-shadow: 0 0 3px black inset;
+    -moz-transition: all 0.2s ease-out;
+    -webkit-transition: all 0.2s ease-out;
+    -o-transition: all 0.2s ease-out;
+    transition: all 0.2s ease-out;
+}
+
+#switch a:active {
+    background-color: #b96f0b;
+    box-shadow: 0 0 4px black inset;
+    -webkit-box-shadow: 0 0 6px black inset;
+    -moz-box-shadow: 0 0 4px black inset;
+}
+
+.switchMatrix {
+    border-radius: 15px 0 0 15px;
+    -moz-border-radius: 15px 0 0 15px;
+    -webkit-border-radius: 15px 0 0 15px;
+}
+
+.switchGraph {
+    border-radius: 0 15px 15px 0;
+    -moz-border-radius: 0 15px 15px 0;
+    -webkit-border-radius: 0 15px 15px 0;
+}
+
+#switchSelected {
+    background-color: #d37e0c;
+    box-shadow: 0 0 3px black inset;
+    -webkit-box-shadow: 0 0 5px black inset;
+    -moz-box-shadow: 0 0 3px black inset;
+    cursor: default;
+}
+
+.flag {
+    width: 30px;
+}
+
+.languageItem {
+    display: block;
+    position: relative;
+    cursor: pointer;
+}
+
+.languageName {
+    position: relative;
+    top: -7px;
+    margin: 0 8px;
+}
+
+.currentLanguageSeparatorSpacing {
+    margin-top: 3px;
+    margin-bottom: 7px;
+}
