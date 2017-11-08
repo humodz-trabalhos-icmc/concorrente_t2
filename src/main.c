@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
         Vector vec = Vector_read(vector_file);
         fclose(vector_file);
 
+
         FILE *matrix_file = fopen_from_env(
                 "GJ_MATRIX_FILE", "matriz.txt", "r");
 

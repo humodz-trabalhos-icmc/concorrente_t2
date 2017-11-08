@@ -30,6 +30,10 @@ void scatter_cyclically(
 #define DONT_SWAP -1
 #define SKIP_COLUMN -2
 
+// If pivot is zero, swap its row with another one
+// Returns the #defines above when
+// DONT_SWAP: pivot != 0
+// SKIP_COLUMN: pivot's column is all zeroes
 int pivot_swap(float *pivot_column, int pivot_index, int n);
 
 
@@ -38,6 +42,8 @@ void gauss_jordan_elimination(
         float *pivot_column, float *my_columns);
 
 
+// Perform pivot swap, normalization and elimination on the
+// result vetor
 void update_result(
         int swap_index, int pivot_index,
         Vector *vec, float *pivot_column);

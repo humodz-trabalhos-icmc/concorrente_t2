@@ -79,7 +79,6 @@ void scatter_cyclically(
             0, MPI_COMM_WORLD);
 
     MPI_Type_free(&CyclicColumnsType);
-
 }
 
 
@@ -96,7 +95,6 @@ int pivot_swap(float *pivot_column, int pivot_index, int n) {
         return DONT_SWAP;
     }
 }
-
 
 
 void gauss_jordan_elimination(
@@ -134,7 +132,7 @@ void update_result(
     vec->data[pivot_index] /= pivot;
 
     // elimination
-    // iterates in reverse order so that pivot's column isn't
+    // iterates in reverse order so that pivot's row isn't
     // zeroed before it's needed
     for(int row = vec->n - 1; row >= 0; row--) {
         if(row != pivot_index) {
