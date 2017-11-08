@@ -51,7 +51,7 @@ void print(
 }
 
 
-void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
+void scatter_and_print(ColMajorMatrix *mat, Vector *vec, int rank, int num_procs) {
     int n;
     float *send_buf = NULL;
 
@@ -97,28 +97,24 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
 
     for(int pivot_index = 0; pivot_index < n; pivot_index++) {
         int pivot_owner = pivot_index % num_procs;
-        int my_column_index = pivot_index / num_procs;
-
         int swap_index = -1;
 
         if(rank == pivot_owner) {
+            int my_pivot_column = pivot_index / num_procs;
+
             // Coluna com o pivo, que sera enviada por bcast
-            pivot_column = &my_columns[n * my_column_index];
+            pivot_column = &my_columns[n * my_pivot_column];
 
             // Pivoteia se o pivo for 0
             if(pivot_column[pivot_index] == 0) {
+                swap_index = -2;
+
                 for(int j = pivot_index; j < n; j++) {
                     if(pivot_column[j] != 0) {
                         swap_index = j;
                         break;
                     }
                 }
-
-                if(swap_index != -1) {
-                    // TODO pula coluna
-                }
-
-                assert(swap_index != -1); // Coluna inteira zerada, deu ruim
             }
         } else {
             // Buffer para receber coluna do pivo por bcast
@@ -129,41 +125,76 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
         MPI_Bcast(&swap_index, 1, MPI_INT, pivot_owner, MPI_COMM_WORLD);
 
         // se der -1, nao precisa pivotear
-        if(swap_index != -1) {
+        if(swap_index > 0) {
             swap_rows(
                     my_columns, n, cols_per_process,
                     pivot_index, swap_index);
+        } else if(swap_index == -2) {
+            continue;
         }
 
 
         // envia coluna do pivo
         MPI_Bcast(pivot_column, n, MPI_FLOAT, pivot_owner, MPI_COMM_WORLD);
 
-        float pivot = pivot_column[pivot_index];
 
-        // normalizacao (divide linha do pivo pelo pivo)
-        for(int col = 0; col < cols_per_process; col++) {
-            my_columns[n * col + pivot_index] /= pivot;
+        float pivot = pivot_column[pivot_index];
+        assert(pivot != 0);
+
+        // Operaçoes no vetor resposta
+        if(rank == 0) {
+            if(swap_index > 0) {
+                Vector_swap(vec, pivot_index, swap_index);
+            }
+
+            vec->data[pivot_index] /= pivot;
+
+            for(int row = n -1; row >= 0; row--) {
+                if(row != pivot_index) {
+                    vec->data[row] -=
+                        pivot_column[row] * vec->data[pivot_index];
+                }
+            }
         }
 
 
+        // normalizacao (divide linha do pivo pelo pivo)
+        if(1)
+        for(int col = 0; col < cols_per_process; col++) {
+            my_columns[n*col + pivot_index] /= pivot;
+        }
+
         // acha 1a coluna que vem depois do pivo
         int initial_col = (pivot_index + num_procs - rank) / num_procs;
-        initial_col = 0;
+        //initial_col = 0;
 
         // eliminacao (subtrai pelo produto)
         //#pragma omp parallel for
-        if(0)
+        if(1)
         for(int row = 0; row < n; row++) {
             for(int col = initial_col; col < cols_per_process; col++) {
                 if(row != pivot_index) {
-                    my_columns[n * col + row] -=
-                        pivot_column[row] * my_columns[n * col + pivot_index];
+                    if(0)if(rank == 0 && col == 1) {
+                        printf("%f, %f\n",
+                        pivot_column[row], my_columns[n*col + pivot_index]);
+                    }
+                    my_columns[n*col + row] -=
+                        pivot_column[row] * my_columns[n*col + pivot_index];
                 }
             }
         }
     }
+
+
     print(rank, num_procs, n, cols_per_process, my_columns);
+    if(0)
+    if(rank == 0){
+        for(int row = 0; row < n; row++)
+            printf("%f\n", vec->data[row]);
+    }
+
+
+    //Vector_print(vec, stdout);
 
     free(bcast_buffer);
     free(my_columns);
@@ -186,6 +217,8 @@ int main(int argc, char **argv) {
     const char *vector_txt = "input/" SIZE "/vetor.txt";
     const char *matrix_txt = "input/" SIZE "/matriz.txt";
 
+    matrix_txt = "input/rasteiro.txt";
+
 
     if(rank == 0) {
         FILE *vector_file = fopen(vector_txt, "r");
@@ -200,13 +233,13 @@ int main(int argc, char **argv) {
         fclose(matrix_file);
 
 
-        scatter_and_print(&mat, rank, num_procs);
+        scatter_and_print(&mat, &vec, rank, num_procs);
 
         Vector_free(&vec);
         Matrix_free(&mat);
 
     } else {
-        scatter_and_print(NULL, rank, num_procs);
+        scatter_and_print(NULL, NULL, rank, num_procs);
     }
 
     MPI_Finalize();
