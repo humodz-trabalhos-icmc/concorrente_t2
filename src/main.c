@@ -7,6 +7,7 @@
 
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
@@ -53,132 +54,105 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
 
 
     int cols_per_process = n / num_procs;
+
     float *my_columns = malloc(sizeof(float[n * cols_per_process]));
     assert(my_columns != NULL);
 
-    MPI_Datatype aux, cols_type;
-    MPI_Type_vector(cols_per_process, n, n * num_procs, MPI_FLOAT, &aux);
-    MPI_Type_commit(&aux);
-    MPI_Type_create_resized(aux, 0, sizeof(float[n]), &cols_type);
-    MPI_Type_commit(&cols_type);
+
+    MPI_Datatype aux_type, CyclicColumnsType;
+
+    MPI_Type_vector(
+            cols_per_process, n, n * num_procs,
+            MPI_FLOAT, &aux_type);
+
+    MPI_Type_create_resized(
+            aux_type, 0, sizeof(float[n]),
+            &CyclicColumnsType);
+
+    MPI_Type_commit(&CyclicColumnsType);
+
 
     MPI_Scatter(
-            send_buf, 1, cols_type,
+            send_buf, 1, CyclicColumnsType,
             my_columns, n * cols_per_process, MPI_FLOAT,
             0, MPI_COMM_WORLD);
 
-    MPI_Type_free(&aux);
-    MPI_Type_free(&cols_type);
+    MPI_Type_free(&CyclicColumnsType);
 
-    // Send columns in rounds e.g. A B C A B C
-    float *my_columns_aux = my_columns;
-    if(0)
-    for(int round = 0; round < cols_per_process; round++) {
 
-        MPI_Scatter(
-                send_buf, n, MPI_FLOAT,
-                my_columns_aux, n, MPI_FLOAT,
-                0, MPI_COMM_WORLD);
+    float *bcast_buffer = malloc(sizeof(float[n]));
+    assert(bcast_buffer != NULL);
 
-        send_buf += n * num_procs;  // Skip to next block
-        my_columns_aux += n; // Skip to next column;
-    }
+    float *pivot_column = NULL;
 
-    print(rank, num_procs, n, cols_per_process, my_columns);
+    for(int pivot_index = 0; pivot_index < n; pivot_index++) {
+        int pivot_owner = pivot_index % num_procs;
+        int my_column_index = pivot_index / num_procs;
 
-    /*
-    float *bcast_column = malloc(sizeof(float[n]));
-    assert(bcast_column != NULL);
+        int swap_indices[2] = {pivot_index, -1};
 
-    for(int i = 0; i < (int) n; i++) {
-        int column_owner = (int) i % num_procs;
-        int column_index = (int) i / num_procs;
+        if(rank == pivot_owner) {
+            // Coluna com o pivo, que sera enviada por bcast
+            pivot_column = &my_columns[n * my_column_index];
 
-        int swap_index[2] = {i, -1};
-
-        // pivoteamento
-        if(rank == column_owner) {
-            float *pivot_col = &my_columns[n * column_index];
-
-            if(pivot_col[i] == 0) {
-                // Pula 0 .. i pois ja foram zeradas
-                int j;
-                for(j = i; j < (int) n; j++) {
-                    if(pivot_col[j] != 0) {
-                        swap_index[1] = j;
+            // Pivoteia se o pivo for 0
+            if(pivot_column[pivot_index] == 0) {
+                for(int j = 0; j < n; j++) {
+                    if(pivot_column[j] != 0) {
+                        swap_indices[1] = j;
                         break;
                     }
                 }
 
-                assert(j != -1); // Tudo zero, deu ruim
+                assert(swap_indices[1] != -1); // Coluna inteira zerada, deu ruim
             }
+        } else {
+            // Buffer para receber coluna do pivo por bcast
+            pivot_column = bcast_buffer;
         }
 
-        // fala pra todo mundo quais linhas eh p trocas
-        MPI_Bcast(swap_index, 2, MPI_INT, column_owner, MPI_COMM_WORLD);
+        // fala pra todo mundo quais linhas eh p trocar
+        MPI_Bcast(swap_indices, 2, MPI_INT, pivot_owner, MPI_COMM_WORLD);
 
-        // se der -1, nao precisa pioteat
-        if(swap_index[1] != -1) {
+        // se der -1, nao precisa pivotear
+        if(swap_indices[1] != -1) {
             swap_rows(
                     my_columns, n, cols_per_process,
-                    swap_index[0], swap_index[1]);
+                    swap_indices[0], swap_indices[1]);
         }
 
-
-
-
-        float *current_col = bcast_column;
-
-        if(rank == column_owner) {
-            current_col = &my_columns[column_index * n];
-        }
 
         // envia coluna do pivo
-        MPI_Bcast(current_col, n, MPI_FLOAT, column_owner, MPI_COMM_WORLD);
+        MPI_Bcast(pivot_column, n, MPI_FLOAT, pivot_owner, MPI_COMM_WORLD);
 
-        float pivot = current_col[i];
+        float pivot = pivot_column[pivot_index];
 
         // normalizacao (divide linha do pivo pelo pivo)
         for(int col = 0; col < cols_per_process; col++) {
-            my_columns[n * col + i] /= pivot;
+            my_columns[n * col + pivot_index] /= pivot;
         }
 
 
         // acha 1a coluna que vem depois do pivo
-        int initial_col = (i + num_procs - rank) / num_procs;
-        (void) initial_col;
+        int initial_col = (pivot_index + num_procs - rank) / num_procs;
+        initial_col = 0;
 
         // eliminacao (subtrai pelo produto)
         //#pragma omp parallel for
-        for(int row = 0; row < (int) n; row++) {
-            for(int col = 0; col < cols_per_process; col++) {
-                if(row != i) {
+        for(int row = 0; row < n; row++) {
+            for(int col = initial_col; col < cols_per_process; col++) {
+                if(row != pivot_index) {
                     my_columns[n * col + row] -=
-                        current_col[row] * my_columns[n * col + i];
+                        pivot_column[row] * my_columns[n * col + pivot_index];
                 }
             }
         }
 
         // ta funcionando so 1 iter
-        for(int round = 0; round < num_procs; round++) {
-            if(round == rank) {
-                printf("rank %d:\n", rank);
-
-                for(int col = 0; col < cols_per_process; col++) {
-                    printf("  ");
-                    for(int row = 0; row < (int)n; row++) {
-                        printf("%f ", my_columns[n*col + row]);
-                    }
-                    printf("\n");
-                }
-                fflush(stdout);
-            }
-            MPI_Barrier(MPI_COMM_WORLD);
-        }
+        print(rank, num_procs, n, cols_per_process, my_columns);
     }
 
-
-    free(bcast_column);/**/
+    free(bcast_buffer);
     free(my_columns);
 }
 
