@@ -1,0 +1,83 @@
+div.forSetButton {
+    display: inline-block;
+}
+
+form.set {
+    text-align: center;
+    height: 89px;
+    position: relative;
+    top: 27px;
+}
+
+form.extend {
+    height: 139px;
+}
+
+.awesomeVert {
+    border-color: #1f1e20 #575757 #1f1e20 #1f1e20;
+    border-style: solid;
+    border-width: 0 1px;
+    height: 90px;
+    display: inline-block;
+    position: relative;
+    bottom: 1px;
+}
+
+.extended {
+    height: 140px;
+}
+
+nav.menu {
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+nav.menu ul {
+    margin: 0;
+    padding: 0;
+}
+
+nav.menu ul li {
+    list-style-type: none;
+    border-bottom: 1px solid #6c6c6c;
+}
+
+nav.menu ul li a {
+    color: #b5b5b5;
+    text-decoration: none;
+    padding: 15px;
+    text-align: center;
+    display: block;    
+    -moz-transition: all 0.5s ease-out;
+    -webkit-transition: all 0.5s ease-out;
+    -o-transition: all 0.5s ease-out;
+    transition: all 0.5s ease-out;
+}
+
+nav.menu ul li a:hover, #current2 {
+    color: white;
+    background-color: #d37e0c;
+    box-shadow: 1px 1px 4px black inset;
+    -webkit-box-shadow: 1px 1px 6px black inset;
+    -moz-box-shadow: 1px 1px 2px black inset;
+    -moz-transition: all 0.2s ease-out;
+    -webkit-transition: all 0.2s ease-out;
+    -o-transition: all 0.2s ease-out;
+    transition: all 0.2s ease-out;
+}
+
+nav.menu ul li a:active {
+    background-color: #b96f0b !important;
+}
+
+#scroll {
+    position: fixed;
+}
+
+.translateSite {
+    position: absolute;
+    top: 3px;
+    left: 0px;
+    width: 410px;
+    text-align: right;
+}

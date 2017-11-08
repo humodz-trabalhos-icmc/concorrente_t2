@@ -1,0 +1,17 @@
+div.forSetButton {
+    margin-left: 120px;
+}
+
+div.forSetMultBlockButton {
+    text-align: right;
+    margin-right: 80px;
+}
+
+form.extend {
+    text-align: left;
+    padding-left: 80px;
+}
+
+#scroll {
+    margin-left: -22px;
+}

@@ -1,0 +1,40 @@
+#window, #window2 {
+    position: absolute;
+    display: none;
+    background-color: #424143;
+    border: 1px solid #d37e0c;
+    z-index: 11;
+    box-shadow: 0 0 7px black;
+    -webkit-box-shadow: 0 0 10px black;
+    -moz-box-shadow: 0 0 7px black;
+    border-radius: 5px;
+}
+
+#windowHeader, #windowHeader2 {
+    background-color: #d37e0c;
+    color: white;
+    text-align: center;
+    padding-bottom: 3px;
+    cursor: move;
+    padding-right: 20px;
+}
+
+.windowText {
+    padding: 10px 20px;
+}
+
+#bodyVeil {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: none;
+    z-index: 1;
+}
+
+#tableSpace, #tableSpace2 {
+    display: inline-block;
+}
+
+.feedbackResponseText {
+    margin-bottom: 10px;
+}
