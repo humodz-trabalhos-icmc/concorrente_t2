@@ -80,3 +80,24 @@ void scatter_cyclically(
     MPI_Type_free(&CyclicColumnsType);
 
 }
+
+
+void gauss_jordan_elimination(
+        int rank, int num_procs, int n, int pivot_index,
+        float *pivot_column, float *my_columns) {
+    int cols_per_process = n / num_procs;
+
+    // Find 1st column to the right of pivot's column
+    int initial_col = (pivot_index + num_procs - rank) / num_procs;
+
+    #pragma omp parallel for
+    for(int row = 0; row < n; row++) {
+        for(int col = initial_col; col < cols_per_process; col++) {
+            if(row != pivot_index) {
+                float same_row = pivot_column[row];
+                float same_col = my_columns[n*col + pivot_index];
+                my_columns[n*col + row] -= same_row * same_col;
+            }
+        }
+    }
+}

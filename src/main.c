@@ -96,14 +96,15 @@ void gauss_jordan(
     float *pivot_column = NULL;
 
     for(int pivot_index = 0; pivot_index < n; pivot_index++) {
+
         int pivot_owner = pivot_index % num_procs;
         int swap_index = -1;
 
         if(rank == pivot_owner) {
-            int my_pivot_column = pivot_index / num_procs;
+            int my_pivot_col_index = pivot_index / num_procs;
 
             // Coluna com o pivo, que sera enviada por bcast
-            pivot_column = &my_columns[n * my_pivot_column];
+            pivot_column = &my_columns[n * my_pivot_col_index];
 
             // Pivoteia se o pivo for 0
             if(pivot_column[pivot_index] == 0) {
@@ -130,6 +131,7 @@ void gauss_jordan(
                     my_columns, n, cols_per_process,
                     pivot_index, swap_index);
         } else if(swap_index == -2) {
+            // Coluna inteira zero, pula pra proxima
             continue;
         }
 
@@ -163,21 +165,28 @@ void gauss_jordan(
             my_columns[n*col + pivot_index] /= pivot;
         }
 
-        // acha 1a coluna que vem depois do pivo
-        int initial_col = (pivot_index + num_procs - rank) / num_procs;
-        //initial_col = 0;
 
-        // eliminacao (subtrai pelo produto)
-        #pragma omp parallel for
-        for(int row = 0; row < n; row++) {
-            for(int col = initial_col; col < cols_per_process; col++) {
-                if(row != pivot_index) {
-                    if(0)if(rank == 0 && col == 1) {
-                        printf("%f, %f\n",
-                        pivot_column[row], my_columns[n*col + pivot_index]);
+        gauss_jordan_elimination(
+                rank, num_procs, n, pivot_index,
+                pivot_column, my_columns);
+
+        if(0) {
+            // acha 1a coluna que vem depois do pivo
+            int initial_col = (pivot_index + num_procs - rank) / num_procs;
+            //initial_col = 0;
+
+            // eliminacao (subtrai pelo produto)
+#pragma omp parallel for
+            for(int row = 0; row < n; row++) {
+                for(int col = initial_col; col < cols_per_process; col++) {
+                    if(row != pivot_index) {
+                        if(0)if(rank == 0 && col == 1) {
+                            printf("%f, %f\n",
+                                    pivot_column[row], my_columns[n*col + pivot_index]);
+                        }
+                        my_columns[n*col + row] -=
+                            pivot_column[row] * my_columns[n*col + pivot_index];
                     }
-                    my_columns[n*col + row] -=
-                        pivot_column[row] * my_columns[n*col + pivot_index];
                 }
             }
         }

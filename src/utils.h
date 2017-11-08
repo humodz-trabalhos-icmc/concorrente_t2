@@ -24,4 +24,9 @@ void scatter_cyclically(
         float *recv_buffer,
         int n, int num_procs);
 
+
+void gauss_jordan_elimination(
+        int rank, int num_procs, int n, int pivot_index,
+        float *pivot_column, float *my_columns);
+
 #endif
