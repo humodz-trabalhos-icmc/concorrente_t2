@@ -16,6 +16,12 @@
 #include "matrix.h"
 #include "utils.h"
 
+
+int min(int a, int b) {
+    if (a < b) return a;
+    else return b;
+}
+
 void print(
         int rank, int num_procs,
         int n, int cols_per_process,
@@ -28,7 +34,7 @@ void print(
     printf("rank %d:\n", rank);
     for(int col = 0; col < cols_per_process; col++) {
         printf("  ");
-        for(int row = 0; row < 5; row++) {
+        for(int row = 0; row < min(n, 9999); row++) {
             printf("%f ", my_columns[n*col + row]);
         }
         printf("\n");
@@ -39,7 +45,11 @@ void print(
     for(int i = 0; i < num_procs - rank; i++) {
         MPI_Barrier(MPI_COMM_WORLD);
     }
+
+    fflush(stdout);
+    MPI_Barrier(MPI_COMM_WORLD);
 }
+
 
 void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
     int n;
@@ -89,7 +99,7 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
         int pivot_owner = pivot_index % num_procs;
         int my_column_index = pivot_index / num_procs;
 
-        int swap_indices[2] = {pivot_index, -1};
+        int swap_index = -1;
 
         if(rank == pivot_owner) {
             // Coluna com o pivo, que sera enviada por bcast
@@ -97,14 +107,18 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
 
             // Pivoteia se o pivo for 0
             if(pivot_column[pivot_index] == 0) {
-                for(int j = 0; j < n; j++) {
+                for(int j = pivot_index; j < n; j++) {
                     if(pivot_column[j] != 0) {
-                        swap_indices[1] = j;
+                        swap_index = j;
                         break;
                     }
                 }
 
-                assert(swap_indices[1] != -1); // Coluna inteira zerada, deu ruim
+                if(swap_index != -1) {
+                    // TODO pula coluna
+                }
+
+                assert(swap_index != -1); // Coluna inteira zerada, deu ruim
             }
         } else {
             // Buffer para receber coluna do pivo por bcast
@@ -112,13 +126,13 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
         }
 
         // fala pra todo mundo quais linhas eh p trocar
-        MPI_Bcast(swap_indices, 2, MPI_INT, pivot_owner, MPI_COMM_WORLD);
+        MPI_Bcast(&swap_index, 1, MPI_INT, pivot_owner, MPI_COMM_WORLD);
 
         // se der -1, nao precisa pivotear
-        if(swap_indices[1] != -1) {
+        if(swap_index != -1) {
             swap_rows(
                     my_columns, n, cols_per_process,
-                    swap_indices[0], swap_indices[1]);
+                    pivot_index, swap_index);
         }
 
 
@@ -139,6 +153,7 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
 
         // eliminacao (subtrai pelo produto)
         //#pragma omp parallel for
+        if(0)
         for(int row = 0; row < n; row++) {
             for(int col = initial_col; col < cols_per_process; col++) {
                 if(row != pivot_index) {
@@ -147,10 +162,8 @@ void scatter_and_print(ColMajorMatrix *mat, int rank, int num_procs) {
                 }
             }
         }
-
-        // ta funcionando so 1 iter
-        print(rank, num_procs, n, cols_per_process, my_columns);
     }
+    print(rank, num_procs, n, cols_per_process, my_columns);
 
     free(bcast_buffer);
     free(my_columns);
@@ -168,8 +181,10 @@ int main(int argc, char **argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
 
-    const char *vector_txt = "input/20/vetor.txt";
-    const char *matrix_txt = "input/20/matriz.txt";
+    #define SIZE "8"
+
+    const char *vector_txt = "input/" SIZE "/vetor.txt";
+    const char *matrix_txt = "input/" SIZE "/matriz.txt";
 
 
     if(rank == 0) {
