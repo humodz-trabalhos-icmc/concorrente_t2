@@ -1,2 +1,7 @@
 input/
 bin/
+output/
+tempos.txt
+
+.ipynb_checkpoints/
+concorrente_t2.ipynb
