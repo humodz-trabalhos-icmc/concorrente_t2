@@ -2,6 +2,9 @@ input/
 bin/
 output/
 tempos.txt
+tempos_seq.txt
+saida.txt
+saida_seq.txt
 
 .ipynb_checkpoints/
 concorrente_t2.ipynb

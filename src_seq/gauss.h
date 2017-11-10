@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-//Luiz Eduardo Dorici NUSP: 4165850 Turma extra  Professor: Rodrigo Fernandes de Mello
-
 //trocar linha
 void trocar(double **matriz,int l1, int l2) {
 	double *vector = matriz[l1];

@@ -5,7 +5,6 @@
  * Matheus Gomes da Silva Horta
  */
 
-
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -36,14 +35,14 @@ int main(int argc, char **argv) {
     // Only master process does input/output
     if(rank == 0) {
         FILE *vector_file = fopen_from_env(
-                "GJ_VECTOR_FILE", "vetor.txt", "r");
+                "OMPI_VECTOR_FILE", "vetor.txt", "r");
 
         Vector vec = Vector_read(vector_file);
         fclose(vector_file);
 
 
         FILE *matrix_file = fopen_from_env(
-                "GJ_MATRIX_FILE", "matriz.txt", "r");
+                "OMPI_MATRIX_FILE", "matriz.txt", "r");
 
         ColMajorMatrix mat = Matrix_read(matrix_file, vec.n);
         fclose(matrix_file);
@@ -53,7 +52,7 @@ int main(int argc, char **argv) {
 
 
         FILE *result_file = fopen_from_env(
-                "GJ_RESULT_FILE", "resultado.txt", "w");
+                "OMPI_RESULT_FILE", "resultado.txt", "w");
 
         Vector_print(&vec, result_file);
         fclose(result_file);
@@ -152,12 +151,11 @@ void gauss_jordan(
 
 
     // TODO remover
-    debug_print(rank, num_procs, n, cols_per_process, my_columns);
+    /*debug_print(rank, num_procs, n, cols_per_process, my_columns);
     if(rank == 0){
         for(int row = 0; row < n; row++)
             printf("%f\n", vec->data[row]);
-    }
-
+    }*/
 
     free(bcast_buffer);
     free(my_columns);

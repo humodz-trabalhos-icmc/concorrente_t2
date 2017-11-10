@@ -39,6 +39,7 @@ Vector Vector_read(FILE *fp) {
     vec.indices = malloc(sizeof(int[vec.n]));
     assert(vec.indices != NULL);
 
+    #pragma omp parallel for
     for(int i = 0; i < vec.n; i++) {
         vec.indices[i] = i;
     }

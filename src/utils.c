@@ -15,9 +15,16 @@ FILE *fopen_from_env(
     const char *filename = getenv(env_var);
     if(filename == NULL) {
         filename = default_filename;
+printf("variavel nao setada\n");
     }
 
     FILE *fp = fopen(filename, open_mode);
+if(fp == NULL) {
+char str[MPI_MAX_PROCESSOR_NAME];
+int len;
+MPI_Get_processor_name(str, &len);
+printf("eu dei pau: %s\n", str);
+}
     assert(fp != NULL);
     return fp;
 }
@@ -105,7 +112,7 @@ void gauss_jordan_elimination(
     // Find 1st column to the right of pivot's column
     int initial_col = (pivot_index + num_procs - rank) / num_procs;
 
-    //#pragma omp parallel for
+    #pragma omp parallel for
     for(int row = 0; row < n; row++) {
         for(int col = initial_col; col < cols_per_process; col++) {
             if(row != pivot_index) {
