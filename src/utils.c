@@ -1,3 +1,10 @@
+/**
+ * Bruno Henrique Rasteiro 9292910
+ * Hugo Moraes Dzin 8532186
+ * Luiz Eduardo Dorici 4165850
+ * Matheus Gomes da Silva Horta 8532321
+ */
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,48 +22,12 @@ FILE *fopen_from_env(
     const char *filename = getenv(env_var);
     if(filename == NULL) {
         filename = default_filename;
-printf("variavel nao setada\n");
     }
 
     FILE *fp = fopen(filename, open_mode);
-if(fp == NULL) {
-char str[MPI_MAX_PROCESSOR_NAME];
-int len;
-MPI_Get_processor_name(str, &len);
-printf("eu dei pau: %s\n", str);
-}
+
     assert(fp != NULL);
     return fp;
-}
-
-
-// Prints each process's "my_columns" matrix
-void debug_print(
-        int rank, int num_procs,
-        int n, int cols_per_process,
-        float *my_columns) {
-
-    for(int i = 0; i < rank; i++) {
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
-    printf("rank %d:\n", rank);
-    for(int col = 0; col < cols_per_process; col++) {
-        printf("  ");
-        for(int row = 0; row < n; row++) {
-            printf("%f ", my_columns[n*col + row]);
-        }
-        printf("\n");
-    }
-    fflush(stdout);  // Sempre dar descarga
-
-
-    for(int i = 0; i < num_procs - rank; i++) {
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
-    fflush(stdout);
-    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 
@@ -79,6 +50,11 @@ void scatter_cyclically(
 
     MPI_Type_commit(&CyclicColumnsType);
 
+    // An element of this type stores n / num_procs columns
+    // Columns are scattered in a cycle, for example (3 processes, n = 9):
+    //    A B C A B C A B C
+    // As opposed to
+    //    A A A B B B C C C
 
     MPI_Scatter(
             send_buffer, 1, CyclicColumnsType,
@@ -148,4 +124,33 @@ void update_result(
             vec->data[row] -= same_row * same_col;
         }
     }
+}
+
+
+void debug_print(
+        int rank, int num_procs,
+        int n, int cols_per_process,
+        float *my_columns) {
+
+    for(int i = 0; i < rank; i++) {
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    printf("rank %d:\n", rank);
+    for(int col = 0; col < cols_per_process; col++) {
+        printf("  ");
+        for(int row = 0; row < n; row++) {
+            printf("%f ", my_columns[n*col + row]);
+        }
+        printf("\n");
+    }
+    fflush(stdout);  // Sempre dar descarga
+
+
+    for(int i = 0; i < num_procs - rank; i++) {
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    fflush(stdout);
+    MPI_Barrier(MPI_COMM_WORLD);
 }

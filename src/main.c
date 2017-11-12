@@ -1,5 +1,5 @@
 /**
- * Bruno Henrique Rasteiro
+ * Bruno Henrique Rasteiro 9292910
  * Hugo Moraes Dzin 8532186
  * Luiz Eduardo Dorici 4165850
  * Matheus Gomes da Silva Horta 8532321
@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
 
     // Only master process does input/output
     if(rank == 0) {
+        // Load inputs, do calculation, save result
         FILE *vector_file = fopen_from_env(
                 "OMPI_VECTOR_FILE", "vetor.txt", "r");
 
@@ -72,6 +73,8 @@ int main(int argc, char **argv) {
 void gauss_jordan(
         ColMajorMatrix *mat, Vector *vec,
         int rank, int num_procs) {
+    // At this point, only master knows mat, vec and n
+
     int n;
     float *send_buffer = NULL;
 
@@ -80,10 +83,12 @@ void gauss_jordan(
         send_buffer = mat->data;
     }
 
+    // Tell everyone the order of the matrix (n)
     MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 
-    // assume que sempre da a mesma quantidade pra cada processo
+    // Divide matrix between processes
+    assert(n % num_procs == 0);
     int cols_per_process = n / num_procs;
 
     float *my_columns = malloc(sizeof(float[n * cols_per_process]));
@@ -92,28 +97,33 @@ void gauss_jordan(
     scatter_cyclically(send_buffer, my_columns, n, num_procs);
 
 
+    // These are used when broadcasting the pivot's whole column
+    float *pivot_column = NULL;
     float *bcast_buffer = malloc(sizeof(float[n]));
     assert(bcast_buffer != NULL);
 
-    float *pivot_column = NULL;
 
     for(int pivot_index = 0; pivot_index < n; pivot_index++) {
-
+        // Which row to swap pivot with
         int swap_index;
+        // Rank of process that has the pivot
         int pivot_owner = pivot_index % num_procs;
 
         if(rank == pivot_owner) {
             int my_pivot_col_index = pivot_index / num_procs;
 
-            // Coluna com o pivo, que sera enviada por bcast
+            // If I own pivot -> store its column in pivot_column
             pivot_column = &my_columns[n * my_pivot_col_index];
+
+            // Check if it's necessary to swap pivot with someone else
+            // This happend when pivot == 0
             swap_index = pivot_swap(pivot_column, pivot_index, n);
         } else {
-            // Buffer para receber coluna do pivo por bcast
+            // If I don't own pivot -> point pivot_column to a receive buffer
             pivot_column = bcast_buffer;
         }
 
-        // fala pra todo mundo quais linhas eh p trocar
+        // Tell everyone which rows to swap
         MPI_Bcast(&swap_index, 1, MPI_INT, pivot_owner, MPI_COMM_WORLD);
 
 
@@ -122,24 +132,25 @@ void gauss_jordan(
                     my_columns, n, cols_per_process,
                     pivot_index, swap_index);
         } else if(swap_index == SKIP_COLUMN) {
+            // Whole column is zeros -> skip computations
             continue;
         }
 
-        // envia coluna do pivo
+        // Broadcast pivot's column
         MPI_Bcast(pivot_column, n, MPI_FLOAT, pivot_owner, MPI_COMM_WORLD);
 
 
         float pivot = pivot_column[pivot_index];
         assert(pivot != 0);
 
-        // Operaçoes no vetor resposta
+        // Update result vector
         if(rank == 0) {
             update_result(
                     swap_index, pivot_index,
                     vec, pivot_column);
         }
 
-        // normalizacao (divide linha do pivo pelo pivo)
+        // Normalization (divide pivot's row by the pivot
         for(int col = 0; col < cols_per_process; col++) {
             my_columns[n*col + pivot_index] /= pivot;
         }
@@ -149,13 +160,7 @@ void gauss_jordan(
                 pivot_column, my_columns);
     }
 
-
-    // TODO remover
-    /*debug_print(rank, num_procs, n, cols_per_process, my_columns);
-    if(rank == 0){
-        for(int row = 0; row < n; row++)
-            printf("%f\n", vec->data[row]);
-    }*/
+    // main() is responsible for saving the result to a file
 
     free(bcast_buffer);
     free(my_columns);

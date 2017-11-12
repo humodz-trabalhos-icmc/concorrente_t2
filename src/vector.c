@@ -1,9 +1,15 @@
+/**
+ * Bruno Henrique Rasteiro 9292910
+ * Hugo Moraes Dzin 8532186
+ * Luiz Eduardo Dorici 4165850
+ * Matheus Gomes da Silva Horta 8532321
+ */
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "vector.h"
-
 
 
 Vector Vector_read(FILE *fp) {
@@ -18,7 +24,7 @@ Vector Vector_read(FILE *fp) {
 
     fscanf(fp, " %f", &num);
     while( ! feof(fp)) {
-        // Double buffer size every time capacity is exceeded
+        // Double the buffer size every time capacity is exceeded
         if(vec.n == capacity) {
             capacity *= 2;
             vec.data = realloc(vec.data, sizeof(float[capacity]));
@@ -31,7 +37,7 @@ Vector Vector_read(FILE *fp) {
         fscanf(fp, " %f", &num);
     }
 
-    // Shrink capacity to correct size
+    // Shrink capacity to the correct size
     if(vec.n < capacity) {
         vec.data = realloc(vec.data, sizeof(float[vec.n]));
     }
@@ -56,6 +62,7 @@ void Vector_free(Vector *vec) {
 }
 
 
+// Prints the elements in correct order, regardless of swaps
 void Vector_print(Vector *vec, FILE *fp) {
     for(int i = 0; i < vec->n; i++) {
         int pos = vec->indices[i];
@@ -64,6 +71,8 @@ void Vector_print(Vector *vec, FILE *fp) {
 }
 
 
+// Keeps track of which rows were swapped, so that the
+// vector can be printed in correct order
 void Vector_swap_rows(Vector *vec, int i, int j) {
     float f = vec->data[i];
     vec->data[i] = vec->data[j];
