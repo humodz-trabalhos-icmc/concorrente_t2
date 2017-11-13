@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-//Luiz Eduardo Dorici NUSP: 4165850 Turma extra  Professor: Rodrigo Fernandes de Mello
+//Luiz Eduardo Dorici NUSP: 4165850
 
 //trocar linha
 void trocar(double **matriz,int l1, int l2) {
