@@ -2,7 +2,6 @@ input/
 bin/
 output/
 plots/
-logs/
 tempos.txt
 tempos_seq.txt
 saida.txt

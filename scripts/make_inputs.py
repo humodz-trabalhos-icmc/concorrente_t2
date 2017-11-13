@@ -5,7 +5,7 @@ import os
 #assert len(sys.argv) > 1
 #N = int(sys.argv[1])
 for N in [8, 10, 20, 40, 1000, 5000, 10000]:
-    path = 'input/' + str(N)
+    path = '../input/' + str(N)
     
     try:
         os.makedirs(path)

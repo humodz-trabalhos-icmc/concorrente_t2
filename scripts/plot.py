@@ -87,7 +87,7 @@ df_eficiencia = df_speedup.divide(pt, axis=1)
 
 
 try:
-    os.makedirs("plots/")
+    os.makedirs("../plots/")
 except OSError:
     pass
 
@@ -133,7 +133,7 @@ layout = go.Layout(
 )
 
 fig = go.Figure(data=data, layout=layout)
-py.image.save_as(fig, filename='plots/tempo_paralelo-BAR.png')
+py.image.save_as(fig, filename='../plots/tempo_paralelo-BAR.png')
 #py.iplot(fig, filename='error-bar-bar')
 
 
@@ -152,7 +152,7 @@ layout = go.Layout(
 )
 
 fig = go.Figure(data=data, layout=layout)
-py.image.save_as(fig, filename='plots/tempo_sequencial.png')
+py.image.save_as(fig, filename='../plots/tempo_sequencial.png')
 
 
 
@@ -188,7 +188,7 @@ layout = go.Layout(
 )
 
 fig = go.Figure(data=data, layout=layout)
-py.image.save_as(fig, filename='plots/time-seq_paralelo.png')
+py.image.save_as(fig, filename='../plots/time-seq_paralelo.png')
 #py.iplot(fig, filename='error-bar-bar')
 
 
@@ -198,24 +198,24 @@ line_chart(df_data,
            "Número de processadores 'p' e thread 't' na forma (p, t)", 
            "Tempo de processamento (min)", 
            list_n,
-           "plots/tempo_paralelo.png")
+           "../plots/tempo_paralelo.png")
 
 line_chart(df_speedup, 
            "Speedup",
            "Número de processadores 'p' e thread 't' na forma (p, t)", 
            "Speedup", 
            list_n,
-           "plots/speedup.png")
+           "../plots/speedup.png")
 
 line_chart(df_eficiencia, 
            "Eficiência",
            "Número de processadores 'p' e thread 't' na forma (p, t)", 
            "Eficiência", 
            list_n,
-           "plots/eficiencia.png")
+           "../plots/eficiencia.png")
 
 
-writer = pd.ExcelWriter('estatisticas.xlsx')
+writer = pd.ExcelWriter('../estatisticas.xlsx')
 df_data.to_excel(writer,'Tempo paralelo')
 df_data_seq['tempo'].to_excel(writer,'Tempo sequencial')
 df_speedup.to_excel(writer,'Speedup')

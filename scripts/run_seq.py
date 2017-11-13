@@ -1,23 +1,30 @@
 import os
 import shlex, subprocess
 
-list_n = [1000, 5000, 10000]
 
-open('tempos_seq.txt', 'w').close()
+try:
+    os.makedirs('../logs')
+except OSError:
+    pass  
+
+open('../logs/tempos_seq.txt', 'w').close()
+
+
+list_n = [1000, 5000, 10000]
 
 for n in list_n:
     os.environ["GJ_SIZE"]     = str(n)
-    os.environ["GJ_PATH_MAT"] = 'input/'  + str(n) + '/matriz.txt'
-    os.environ["GJ_PATH_VET"] = 'input/'  + str(n) + '/vetor.txt'
+    os.environ["GJ_PATH_MAT"] = '../input/'  + str(n) + '/matriz.txt'
+    os.environ["GJ_PATH_VET"] = '../input/'  + str(n) + '/vetor.txt'
     
-    path = 'output/' + str(n) + '/SEQ'
+    path = '../output/' + str(n) + '/SEQ'
     try:
         os.makedirs(path)
     except OSError:
         pass
     
     os.environ["GJ_PATH_OUT"] = path+'/resultado.txt'
-    cmd = 'time -f %e -a -o tempos_seq.txt ./bin/gauss_jordan-seq'
+    cmd = 'time -f %e -a -o ../logs/tempos_seq.txt ../bin/gauss_jordan-seq'
     args = cmd.split()
     
     print(os.environ["GJ_SIZE"])
@@ -34,7 +41,7 @@ for n in list_n:
         errcode = proc.returncode
         
         if errcode != 0:
-            print("n={} p={} t={}".format(n, p, t))
+            print("n="+n)
             print(out)
             print(errcode)
             print()
