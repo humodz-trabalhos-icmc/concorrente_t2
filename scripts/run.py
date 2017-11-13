@@ -1,8 +1,9 @@
 import os
 import shlex, subprocess
 
-list_n = [1000, 5000, 10000]
-list_p = [2, 4, 8]
+#list_n = [1000, 5000, 10000]
+list_n = [10000]
+list_p = [4, 8]
 list_t = [4, 8]
 
 open('tempos.txt', 'w').close()
@@ -12,7 +13,10 @@ for n in list_n:
     os.environ["OMPI_VECTOR_FILE"] = 'input/' + str(n) + '/vetor.txt'
 
     for p in list_p:
-        for t in list_t:            
+        for t in list_t:    
+            if p == 4 and t == 4:
+                continue
+                
             path = 'output/' + str(n) + '/NP=' + str(p) + '_NT=' + str(t)
 
             try:
@@ -33,14 +37,14 @@ for n in list_n:
             print(cmd)
             print()
 
-            for i in range(5):
-                PIPE = subprocess.PIPE
-                proc = subprocess.Popen(args, stdout=PIPE, stderr=PIPE)
-                out, err = proc.communicate()
-                errcode = proc.returncode
+            #for i in range(5):
+            PIPE = subprocess.PIPE
+            proc = subprocess.Popen(args, stdout=PIPE, stderr=PIPE)
+            out, err = proc.communicate()
+            errcode = proc.returncode
 
-                if errcode != 0:
-                    print("ERRO : n={} p={} t={}\n".format(n, p, t))
-                    print(out)
-                    print(errcode)
-                    print('\n')
+            if errcode != 0:
+                print("ERRO : n={} p={} t={}\n".format(n, p, t))
+                print(out)
+                print(errcode)
+                print('\n')
