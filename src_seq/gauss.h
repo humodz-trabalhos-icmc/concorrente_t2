@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+//Luiz Eduardo Dorici NUSP: 4165850 Turma extra  Professor: Rodrigo Fernandes de Mello
+
 //trocar linha
 void trocar(double **matriz,int l1, int l2) {
 	double *vector = matriz[l1];
@@ -50,19 +52,15 @@ void divide(double **matriz,int linha,int tamanho,double constante) {
 }
 
 //organiza matriz triangular superior para poder encontrar os pivots na diagonal principal
-void triangular(double **matriz, int n) {
-	int i,j,k;
-
-	for(i=0,j=0;i<n && j<n;i++,j++) {
-		if(i==j && matriz[i][j] == 0) {   
-			for(k=i;k<n;k++) {			
-				if(matriz[k][j] != 0) {
-					trocar(matriz,i,k);
+void triangular(double **matriz, int n, int linha, int coluna) {
+	int k;
+ 
+			for(k=linha;k<n-linha;k++) {			
+				if(matriz[k][coluna] != 0) {
+					trocar(matriz,linha,k);
 					break;
 				}
 			}
-		}	
-	}
 }
 
 //metodo de gauss-jordan para escalonar a matriz
@@ -70,7 +68,7 @@ void gauss_jordan(double **matriz, int linhas, int colunas) {
 	int i,j,k;
 	double aux;
 
-	triangular(matriz,linhas);
+	//triangular(matriz,linhas);
 
 	for(i=0;i<linhas;i++) {
 		for(j=0;j<linhas;j++) {
@@ -78,8 +76,10 @@ void gauss_jordan(double **matriz, int linhas, int colunas) {
 			//caso o pivot seja maior que 0 entao divide-se toda sua linha por -pivot
 			if(i == j && matriz[i][j] != 1) {
 				if(i == j && matriz[i][j] == 0)
-					exit(0);
+					//printf("fodeu\n");
+					//exit(0);
 					//tratar pivoteamento durante o processo de escalonamento
+					triangular(matriz,linhas, i, j);
 				else
 					divide(matriz,i,colunas,matriz[i][j]);
 			}
